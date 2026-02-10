@@ -1,6 +1,13 @@
 import { Command } from "commander";
 import { installNodeStorage } from "../services/nodeStorage";
-import { initTidalClient, searchTracks, searchArtists } from "../services/tidal";
+import {
+  initTidalClient,
+  searchTracks,
+  searchArtists,
+  searchAlbums,
+  searchPlaylists,
+  searchTopHits,
+} from "../services/tidal";
 
 installNodeStorage();
 
@@ -14,23 +21,48 @@ export function registerSearchCommand(program: Command): void {
     .command("search <query>")
     .description("Search TIDAL catalog")
     .option("--limit <count>", "Max results (default: 20)", (v) => Number.parseInt(v, 10))
-    .option("--type <type>", "Search type (tracks|artists)", "tracks")
+    .option("--type <type>", "Search type (track|album|artist|playlist|top)", "track")
     .action(async (query: string, options: SearchOptions) => {
       await initTidalClient();
       const limit = options.limit ?? 20;
-      const type = (options.type ?? "tracks").toLowerCase();
+      const type = (options.type ?? "track").toLowerCase();
 
-      if (type === "artists") {
-        const artist = await searchArtists(query);
-        if (!artist) {
-          console.error("No artist found.");
-          process.exitCode = 1;
-          return;
+      switch (type) {
+        case "artist":
+        case "artists": {
+          const artist = await searchArtists(query);
+          if (!artist) {
+            console.error("No artist found.");
+            process.exitCode = 1;
+            return;
+          }
+          console.log(JSON.stringify(artist, null, 2));
+          break;
         }
-        console.log(JSON.stringify(artist, null, 2));
-      } else {
-        const tracks = await searchTracks(query, limit);
-        console.log(JSON.stringify({ count: tracks.length, tracks }, null, 2));
+        case "album":
+        case "albums": {
+          const albums = await searchAlbums(query, limit);
+          console.log(JSON.stringify({ count: albums.length, albums }, null, 2));
+          break;
+        }
+        case "playlist":
+        case "playlists": {
+          const playlists = await searchPlaylists(query, limit);
+          console.log(JSON.stringify({ count: playlists.length, playlists }, null, 2));
+          break;
+        }
+        case "top":
+        case "tophits": {
+          const tracks = await searchTopHits(query, limit);
+          console.log(JSON.stringify({ count: tracks.length, tracks }, null, 2));
+          break;
+        }
+        default: {
+          // "track" / "tracks" / anything else defaults to tracks
+          const tracks = await searchTracks(query, limit);
+          console.log(JSON.stringify({ count: tracks.length, tracks }, null, 2));
+          break;
+        }
       }
     });
 }

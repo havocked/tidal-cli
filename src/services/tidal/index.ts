@@ -1,17 +1,20 @@
 // Barrel export — all public API from the tidal module.
-// Consumers can import from "../services/tidal" or keep using "../services/tidalSdk".
 
 export { loadCredentials, initTidalClient, getClient, getUserId } from "./client";
 export { parseDuration, formatKey, mapTrackResource, resolveTrackMeta, buildIncludedMap } from "./mappers";
 export { delay, fetchTracksByIds } from "./fetcher";
-export { searchArtists, searchTracks } from "./search";
-export { getArtistTopTracks, getArtistAlbums } from "./artists";
+export { searchArtists, searchTracks, searchAlbums, searchPlaylists, searchTopHits } from "./search";
+export { getArtistTopTracks, getArtistAlbums, getSimilarArtists, getArtistRadio, getArtistBio } from "./artists";
 export { getAlbumTracks } from "./albums";
-export { getTrack, getSimilarTracks, getTrackRadio } from "./tracks";
+export { getTrack, getSimilarTracks, getTrackRadio, getLyrics, getTrackGenres } from "./tracks";
 export {
   getPlaylistTracks,
   getFavoriteTracks,
   createPlaylist,
   addTracksToPlaylist,
+  deletePlaylist,
+  removeTracksFromPlaylist,
   type CreatePlaylistOptions,
 } from "./playlists";
+export { getFavoriteAlbums, getFavoriteArtists, getUserPlaylists } from "./collections";
+export { getDiscoveryMixes, getMyMixes, getNewArrivalMixes, type Mix } from "./recommendations";

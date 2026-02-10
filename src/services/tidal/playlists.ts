@@ -184,3 +184,66 @@ export async function addTracksToPlaylist(
 
   return added;
 }
+
+/**
+ * Delete a playlist.
+ */
+export async function deletePlaylist(playlistId: string): Promise<void> {
+  const client = getClient();
+
+  const resp = await (client as { DELETE: Function }).DELETE("/playlists/{id}", {
+    params: {
+      path: { id: playlistId },
+    },
+  }) as { error?: unknown };
+
+  if (resp.error) {
+    throw new Error(
+      `Failed to delete playlist: ${JSON.stringify(resp.error)}`
+    );
+  }
+}
+
+/**
+ * Remove tracks from a playlist.
+ */
+export async function removeTracksFromPlaylist(
+  playlistId: string,
+  trackIds: string[]
+): Promise<number> {
+  const client = getClient();
+  let removed = 0;
+
+  for (let i = 0; i < trackIds.length; i += PLAYLIST_ITEMS_BATCH) {
+    const batch = trackIds.slice(i, i + PLAYLIST_ITEMS_BATCH);
+
+    const resp = await (client as { DELETE: Function }).DELETE(
+      "/playlists/{id}/relationships/items",
+      {
+        params: {
+          path: { id: playlistId },
+        },
+        body: {
+          data: batch.map((tid) => ({
+            id: tid,
+            type: "tracks" as const,
+          })),
+        },
+      }
+    ) as { error?: unknown };
+
+    if (resp.error) {
+      throw new Error(
+        `Failed to remove tracks (batch ${Math.floor(i / PLAYLIST_ITEMS_BATCH) + 1}): ${JSON.stringify(resp.error)}`
+      );
+    }
+
+    removed += batch.length;
+
+    if (i + PLAYLIST_ITEMS_BATCH < trackIds.length) {
+      await delay(RATE_LIMIT_MS);
+    }
+  }
+
+  return removed;
+}

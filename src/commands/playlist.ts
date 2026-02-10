@@ -2,6 +2,8 @@ import { Command } from "commander";
 import {
   addTracksToPlaylist,
   createPlaylist,
+  deletePlaylist,
+  removeTracksFromPlaylist,
   initTidalClient,
 } from "../services/tidal";
 
@@ -82,5 +84,25 @@ export function registerPlaylistCommand(program: Command): void {
     .option("--public", "Make playlist public (default: unlisted)")
     .action(async (options: PlaylistCreateOptions) => {
       await runPlaylistCreate(options);
+    });
+
+  playlist
+    .command("delete <playlist-id>")
+    .description("Delete a playlist")
+    .action(async (playlistId: string) => {
+      await initTidalClient();
+      await deletePlaylist(playlistId);
+      console.error(`[playlist] Deleted: ${playlistId}`);
+      console.log(JSON.stringify({ deleted: playlistId }));
+    });
+
+  playlist
+    .command("remove <playlist-id> <track-ids...>")
+    .description("Remove tracks from a playlist")
+    .action(async (playlistId: string, trackIds: string[]) => {
+      await initTidalClient();
+      const removed = await removeTracksFromPlaylist(playlistId, trackIds);
+      console.error(`[playlist] Removed ${removed} tracks from ${playlistId}`);
+      console.log(JSON.stringify({ playlistId, removedCount: removed }));
     });
 }

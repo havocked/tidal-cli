@@ -113,23 +113,73 @@ Register at [developer.tidal.com](https://developer.tidal.com) to get credential
 ### `search` — Search the catalog
 
 ```bash
-tidal-cli search "Daft Punk"                    # Search tracks (default)
-tidal-cli search "Daft Punk" --type artists      # Search artists
-tidal-cli search "Random Access" --limit 5       # Limit results
+tidal-cli search "Daft Punk"                         # Search tracks (default)
+tidal-cli search "Daft Punk" --type artist            # Search artists
+tidal-cli search "Random Access" --type album         # Search albums
+tidal-cli search "chill vibes" --type playlist        # Search playlists
+tidal-cli search "Daft Punk" --type top               # Top hits (mixed)
+tidal-cli search "Random Access" --limit 5            # Limit results
 ```
 
-### `playlist create` — Create a playlist
+Types: `track` (default), `album`, `artist`, `playlist`, `top`
 
-Reads track IDs from stdin (one per line or comma-separated):
+### `similar` — Similar artists
 
 ```bash
-echo "251380837" | tidal-cli playlist create --name "Quick Mix"
-
-# Pipe from another tool
-some-tool --format ids | tidal-cli playlist create --name "Generated" --description "Auto-curated"
+tidal-cli similar 3503244                  # Similar to artist ID
+tidal-cli similar 3503244 --limit 20       # More results
 ```
 
-Options: `--name` (required), `--description`, `--public`
+### `radio` — Radio tracks
+
+```bash
+tidal-cli radio 251380837                  # Track-based radio
+tidal-cli radio 3503244 --artist           # Artist-based radio
+tidal-cli radio 251380837 --limit 30       # More tracks
+```
+
+### `recommendations` — Personalized mixes
+
+```bash
+tidal-cli recommendations                 # All mix types
+tidal-cli recommendations --type discovery # Discovery mixes only
+tidal-cli recommendations --type my        # My mixes only
+tidal-cli recommendations --type new       # New arrivals only
+```
+
+### `library` — Browse your library
+
+```bash
+tidal-cli library tracks                   # Favorite tracks (JSON)
+tidal-cli library tracks --format ids      # Track IDs only
+tidal-cli library albums                   # Favorite albums
+tidal-cli library artists                  # Favorite artists
+tidal-cli library playlists                # Your playlists
+tidal-cli library albums --limit 10        # Limit results
+```
+
+### `lyrics` — Track lyrics
+
+```bash
+tidal-cli lyrics 251380837                 # Show lyrics
+tidal-cli lyrics 251380837 --json          # JSON output with subtitles
+```
+
+### `playlist` — Manage playlists
+
+```bash
+# Create
+echo "251380837" | tidal-cli playlist create --name "Quick Mix"
+some-tool --format ids | tidal-cli playlist create --name "Generated" --description "Auto-curated"
+
+# Delete
+tidal-cli playlist delete <playlist-id>
+
+# Remove tracks
+tidal-cli playlist remove <playlist-id> 251380837 12345678
+```
+
+Options for create: `--name` (required), `--description`, `--public`
 
 ### `sync` — Fetch favorite tracks
 

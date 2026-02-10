@@ -9,6 +9,11 @@ import { registerAuthCommand } from "./commands/auth";
 import { registerSearchCommand } from "./commands/search";
 import { registerPlaylistCommand } from "./commands/playlist";
 import { registerSyncCommand } from "./commands/sync";
+import { registerSimilarCommand } from "./commands/similar";
+import { registerRadioCommand } from "./commands/radio";
+import { registerRecommendationsCommand } from "./commands/recommendations";
+import { registerLibraryCommand } from "./commands/library";
+import { registerLyricsCommand } from "./commands/lyrics";
 
 const program = new Command();
 
@@ -28,6 +33,11 @@ registerAuthCommand(program);
 registerSearchCommand(program);
 registerPlaylistCommand(program);
 registerSyncCommand(program);
+registerSimilarCommand(program);
+registerRadioCommand(program);
+registerRecommendationsCommand(program);
+registerLibraryCommand(program);
+registerLyricsCommand(program);
 
 program.parseAsync(process.argv).catch((error) => {
   const message = error instanceof Error ? error.message : String(error);

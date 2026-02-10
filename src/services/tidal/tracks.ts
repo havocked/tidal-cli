@@ -83,3 +83,56 @@ export async function getTrackRadio(
 
   return [];
 }
+
+/**
+ * Get lyrics for a track.
+ */
+export async function getLyrics(
+  trackId: string
+): Promise<{ lyrics: string; subtitles: string | null } | null> {
+  const client = getClient();
+
+  const { data } = await withRetry(
+    () =>
+      client.GET("/tracks/{id}/relationships/lyrics", {
+        params: {
+          path: { id: trackId },
+          query: { countryCode: COUNTRY_CODE },
+        },
+      } as never),
+    { label: `getLyrics(${trackId})` }
+  );
+
+  const resource = ((data as unknown as { data?: Array<{ attributes?: { text?: string; subtitles?: string } }> })?.data ?? [])[0];
+  if (!resource?.attributes?.text) return null;
+
+  return {
+    lyrics: resource.attributes.text,
+    subtitles: resource.attributes.subtitles ?? null,
+  };
+}
+
+/**
+ * Get genres for a track.
+ */
+export async function getTrackGenres(
+  trackId: string
+): Promise<string[]> {
+  const client = getClient();
+
+  const { data } = await withRetry(
+    () =>
+      client.GET("/tracks/{id}/relationships/genres", {
+        params: {
+          path: { id: trackId },
+          query: { countryCode: COUNTRY_CODE },
+        },
+      } as never),
+    { label: `getTrackGenres(${trackId})` }
+  );
+
+  const genres = ((data as unknown as { data?: Array<{ id: string; attributes?: { genreName?: string } }> })?.data ?? []);
+  return genres
+    .map((g) => g.attributes?.genreName)
+    .filter((name): name is string => !!name);
+}

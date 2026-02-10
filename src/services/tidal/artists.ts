@@ -1,5 +1,5 @@
 import { withRetry } from "../../lib/retry";
-import type { Album, Track } from "../types";
+import type { Album, Artist, Track } from "../types";
 import { getClient } from "./client";
 import { delay, fetchTracksByIds } from "./fetcher";
 import { buildIncludedMap } from "./mappers";
@@ -8,6 +8,7 @@ import {
   RATE_LIMIT_MS,
   type AlbumAttrs,
   type AlbumResource,
+  type ArtistResource,
   type IncludedResource,
   type ResourceId,
 } from "./types";
@@ -152,4 +153,142 @@ export async function getArtistAlbums(
   });
 
   return albums.slice(0, limit);
+}
+
+/**
+ * Get artists similar to the given artist.
+ */
+export async function getSimilarArtists(
+  artistId: number,
+  limit = 10
+): Promise<Artist[]> {
+  const client = getClient();
+
+  const { data } = await withRetry(
+    () =>
+      client.GET("/artists/{id}/relationships/similarArtists", {
+        params: {
+          path: { id: String(artistId) },
+          query: {
+            countryCode: COUNTRY_CODE,
+            "page[limit]": limit,
+          },
+        },
+      } as never),
+    { label: `getSimilarArtists(${artistId})` }
+  );
+
+  const artistIds =
+    ((data as unknown as { data?: ResourceId[] })?.data ?? []).map((r) => r.id) ?? [];
+  if (artistIds.length === 0) return [];
+
+  // Fetch full artist details
+  const artists: Artist[] = [];
+  const ARTIST_BATCH_SIZE = 20;
+  for (let i = 0; i < artistIds.length; i += ARTIST_BATCH_SIZE) {
+    const batch = artistIds.slice(i, i + ARTIST_BATCH_SIZE);
+
+    const { data: artistData } = await withRetry(
+      () =>
+        client.GET("/artists", {
+          params: {
+            query: {
+              countryCode: COUNTRY_CODE,
+              "filter[id]": batch,
+            },
+          },
+        }),
+      { label: `fetchArtists(${batch.length} ids)` }
+    );
+
+    for (const artist of (artistData as { data?: ArtistResource[] })?.data ?? []) {
+      const attrs = artist.attributes as { name?: string; picture?: Array<{ url?: string }> } | undefined;
+      artists.push({
+        id: parseInt(artist.id, 10),
+        name: attrs?.name ?? "Unknown",
+        picture: attrs?.picture?.[0]?.url ?? null,
+      });
+    }
+
+    if (i + ARTIST_BATCH_SIZE < artistIds.length) {
+      await delay(RATE_LIMIT_MS);
+    }
+  }
+
+  return artists.slice(0, limit);
+}
+
+/**
+ * Get radio tracks based on an artist.
+ */
+export async function getArtistRadio(
+  artistId: number,
+  limit = 20
+): Promise<Track[]> {
+  const client = getClient();
+
+  const resp = await withRetry(
+    () =>
+      client.GET("/artists/{id}/relationships/radio", {
+        params: {
+          path: { id: String(artistId) },
+          query: { countryCode: COUNTRY_CODE },
+        },
+      } as never),
+    { label: `getArtistRadio(${artistId})` }
+  );
+
+  const { data } = resp;
+  const responseData = (
+    (data ?? {}) as { data?: ResourceId | ResourceId[] }
+  ).data;
+
+  // Same pattern as trackRadio — may return playlist or track IDs
+  if (Array.isArray(responseData)) {
+    const playlists = responseData.filter((r) => r.type === "playlists");
+    if (playlists.length > 0 && playlists[0]?.id) {
+      const { getPlaylistTracks } = await import("./playlists");
+      return getPlaylistTracks(playlists[0].id, limit);
+    }
+    const trackIds = responseData
+      .filter((r) => r.type === "tracks")
+      .map((r) => r.id);
+    if (trackIds.length === 0) return [];
+    return fetchTracksByIds(client, trackIds.slice(0, limit));
+  }
+
+  if (responseData?.id) {
+    const { getPlaylistTracks } = await import("./playlists");
+    return getPlaylistTracks(responseData.id, limit);
+  }
+
+  return [];
+}
+
+/**
+ * Get artist biography text.
+ */
+export async function getArtistBio(
+  artistId: number
+): Promise<{ text: string; source: string } | null> {
+  const client = getClient();
+
+  const { data } = await withRetry(
+    () =>
+      (client as { GET: Function }).GET("/artistBiographies/{id}", {
+        params: {
+          path: { id: String(artistId) },
+          query: { countryCode: COUNTRY_CODE },
+        },
+      }) as Promise<{ data?: unknown; error?: unknown; response?: Response }>,
+    { label: `getArtistBio(${artistId})` }
+  );
+
+  const resource = (data as unknown as { data?: { attributes?: { text?: string; source?: string } } })?.data;
+  if (!resource?.attributes?.text) return null;
+
+  return {
+    text: resource.attributes.text,
+    source: resource.attributes.source ?? "TIDAL",
+  };
 }
