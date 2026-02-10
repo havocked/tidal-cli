@@ -86,6 +86,11 @@ export async function getTrackRadio(
 
 /**
  * Get lyrics for a track.
+ *
+ * Note: The TIDAL public developer API currently returns empty data for lyrics
+ * on most/all tracks. The endpoint exists in the schema but lyrics content
+ * appears to be restricted. This function is kept for forward compatibility
+ * in case TIDAL enables it in the future.
  */
 export async function getLyrics(
   trackId: string
@@ -113,7 +118,11 @@ export async function getLyrics(
 }
 
 /**
- * Get genres for a track.
+ * Get genres for a specific track via the relationship endpoint.
+ *
+ * Note: This endpoint often returns empty results. For reliable genre data,
+ * use the batch track fetcher (fetchTracksByIds) which resolves genres
+ * from included resources in the JSON:API response.
  */
 export async function getTrackGenres(
   trackId: string

@@ -160,6 +160,8 @@ tidal-cli library albums --limit 10        # Limit results
 
 ### `lyrics` — Track lyrics
 
+> **Note:** TIDAL's public developer API currently returns empty lyrics for most tracks. This command is included for forward compatibility.
+
 ```bash
 tidal-cli lyrics 251380837                 # Show lyrics
 tidal-cli lyrics 251380837 --json          # JSON output with subtitles
@@ -235,6 +237,14 @@ stdout is reserved for machine output (JSON, IDs). Progress and diagnostics go t
 tidal-cli sync --format ids | head -20
 tidal-cli search "ambient" --limit 10 | jq '.tracks[].id'
 ```
+
+## Known API Limitations
+
+Some TIDAL API endpoints exist in the schema but return limited data through the public developer API:
+
+- **Lyrics** — Returns empty for most/all tracks. Kept for forward compatibility.
+- **Track-level genres** — The per-track genre endpoint returns empty. Genres are available through the batch track fetcher (used by `search`, `sync`, etc.) via included resources.
+- **Similar artists** — Works but coverage varies. Some popular artists return results (e.g., Beyoncé → Rihanna, Alicia Keys), others return empty.
 
 ## Requirements
 
