@@ -66,6 +66,27 @@ export async function initTidalClient(): Promise<void> {
 
   userId = String(creds.userId);
   apiClient = createAPIClient(auth.credentialsProvider);
+
+  // Debug middleware: log raw request/response when TIDAL_DEBUG=1
+  if (process.env.TIDAL_DEBUG === "1") {
+    apiClient.use({
+      async onRequest({ request }) {
+        console.error(`\n→ ${request.method} ${request.url}`);
+        return request;
+      },
+      async onResponse({ response }) {
+        const clone = response.clone();
+        const body = await clone.text();
+        console.error(`← ${response.status} ${response.statusText}`);
+        try {
+          console.error(JSON.stringify(JSON.parse(body), null, 2));
+        } catch {
+          console.error(body.slice(0, 2000));
+        }
+        return response;
+      },
+    });
+  }
 }
 
 export function getClient(): ApiClient {
