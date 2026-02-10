@@ -3,8 +3,8 @@ import path from "path";
 import { expandHome } from "../lib/paths";
 
 /**
- * A minimal localStorage-compatible adapter for Node.js
- * Stores auth tokens in ~/.config/curator/auth-storage.json
+ * A minimal localStorage-compatible adapter for Node.js.
+ * Stores auth tokens in ~/.config/tidal-cli/auth-storage.json.
  */
 class NodeStorage implements Storage {
   private storePath: string;

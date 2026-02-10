@@ -1,7 +1,7 @@
 {
   "name": "tidal-cli",
   "version": "0.2.0",
-  "description": "CLI to control the TIDAL desktop app via Chrome DevTools Protocol",
+  "description": "CLI for TIDAL — desktop app control via CDP and catalog access via the official API",
   "main": "dist/cli.js",
   "bin": {
     "tidal-cli": "dist/cli.js"
@@ -11,7 +11,15 @@
     "prepare": "npm run build",
     "test": "npm run build && node --test tests/*.test.js"
   },
-  "keywords": ["tidal", "music", "cli", "cdp", "devtools"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/havocked/tidal-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/havocked/tidal-cli/issues"
+  },
+  "homepage": "https://github.com/havocked/tidal-cli#readme",
+  "keywords": ["tidal", "music", "cli", "cdp", "devtools", "playlist", "search", "api"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",

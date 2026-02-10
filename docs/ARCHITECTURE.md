@@ -1,8 +1,11 @@
-# Architecture & System Sequence Diagrams
+# Architecture
 
 ## Overview
 
-tidal-cli controls the TIDAL desktop app without needing API credentials or authentication. It uses Chrome DevTools Protocol to execute JavaScript inside the running Electron app, and reads playback status from the macOS Now Playing system.
+tidal-cli has two layers:
+
+1. **CDP layer** — controls the TIDAL desktop app (Electron) via Chrome DevTools Protocol. No auth needed.
+2. **API layer** — accesses the TIDAL catalog via the official `@tidal-music/api` SDK. Requires OAuth.
 
 ## System Components
 
@@ -22,106 +25,53 @@ tidal-cli controls the TIDAL desktop app without needing API credentials or auth
 │  │ (status only)│    Framework      │  │ (native arm64│  │   │
 │  └──────────────┘                   │  │  audio/DRM)  │  │   │
 │                                     │  └──────────────┘  │   │
-│                                     └────────────────────┘   │
+│  ┌──────────┐                       └────────────────────┘   │
+│  │ tidal-cli │──── HTTPS ────► openapi.tidal.com             │
+│  │ (API cmds)│                 (search, playlists, sync)     │
+│  └──────────┘                                                │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-## Sequence Diagrams
-
-### 1. Play a playlist
+## Source Layout
 
 ```
-User              tidal-cli           Launcher           CDP              TIDAL App
- │                    │                  │                 │                  │
- │ play playlist/xxx  │                  │                 │                  │
- │───────────────────►│                  │                 │                  │
- │                    │ isCDPAvailable?  │                 │                  │
- │                    │─────────────────►│                 │                  │
- │                    │    true          │                 │                  │
- │                    │◄─────────────────│                 │                  │
- │                    │                  │                 │                  │
- │                    │ navigate(desktop.tidal.com/playlist/xxx)              │
- │                    │────────────────────────────────────►                  │
- │                    │                  │                 │  window.location │
- │                    │                  │                 │─────────────────►│
- │                    │                  │                 │                  │
- │                    │ (wait 2s for page load)            │                  │
- │                    │                  │                 │                  │
- │                    │ clickButton("Play")                │                  │
- │                    │────────────────────────────────────►                  │
- │                    │                  │                 │  btn.click()     │
- │                    │                  │                 │─────────────────►│
- │                    │                  │                 │                  │──► Audio plays
- │                    │                  │                 │                  │
- │                    │ getNowPlaying()  │                 │                  │
- │                    │──► nowplaying-cli│                 │                  │
- │                    │◄── title/artist  │                 │                  │
- │                    │                  │                 │                  │
- │ ♫ Title — Artist   │                  │                 │                  │
- │◄───────────────────│                  │                 │                  │
-```
-
-### 2. Auto-launch TIDAL (cold start)
-
-```
-User              tidal-cli           Launcher           TIDAL App
- │                    │                  │                  │
- │ pause              │                  │                  │
- │───────────────────►│                  │                  │
- │                    │ isCDPAvailable?  │                  │
- │                    │─────────────────►│                  │
- │                    │    false         │                  │
- │                    │◄─────────────────│                  │
- │                    │                  │                  │
- │                    │ isTidalRunning?  │                  │
- │                    │─────────────────►│                  │
- │                    │    true (no CDP) │                  │
- │                    │◄─────────────────│                  │
- │                    │                  │                  │
- │                    │ quit + relaunch  │                  │
- │                    │─────────────────►│                  │
- │                    │                  │──quit───────────►│
- │                    │                  │                  X
- │                    │                  │                  │
- │                    │                  │──open --args     │
- │                    │                  │  --remote-debug  │
- │                    │                  │─────────────────►│ (new process)
- │                    │                  │                  │
- │                    │                  │ poll CDP /json   │
- │                    │                  │─────────────────►│
- │                    │                  │◄─────────────────│
- │                    │   ready          │                  │
- │                    │◄─────────────────│                  │
- │                    │                  │                  │
- │                    │ (proceed with command)              │
-```
-
-### 3. Status check (no CDP needed)
-
-```
-User              tidal-cli         nowplaying-cli      macOS NowPlaying
- │                    │                  │                  │
- │ status             │                  │                  │
- │───────────────────►│                  │                  │
- │                    │ get-raw          │                  │
- │                    │─────────────────►│                  │
- │                    │                  │  query           │
- │                    │                  │─────────────────►│
- │                    │                  │  title/artist/   │
- │                    │                  │  duration/rate   │
- │                    │                  │◄─────────────────│
- │                    │ NowPlayingInfo   │                  │
- │                    │◄─────────────────│                  │
- │                    │                  │                  │
- │ ▶ Title            │                  │                  │
- │   Artist: ...      │                  │                  │
- │   Time: 1:23/4:56  │                  │                  │
- │◄───────────────────│                  │                  │
+src/
+  cli.ts                       # Commander entry point
+  commands/
+    play.ts                    # Navigate to resource + click Play (CDP)
+    playback.ts                # pause, resume, next, prev, shuffle, repeat (CDP)
+    status.ts                  # Now playing via nowplaying-cli
+    volume.ts                  # Volume get/set via DOM slider (CDP)
+    auth.ts                    # OAuth PKCE login/status/logout (API)
+    search.ts                  # Catalog search (API)
+    playlist.ts                # Create playlists (API)
+    sync.ts                    # Fetch favorite tracks (API)
+  services/
+    cdp.ts                     # CDP WebSocket client
+    nowplaying.ts              # nowplaying-cli wrapper
+    launcher.ts                # Ensure TIDAL is running with CDP
+    nodeStorage.ts             # localStorage polyfill for SDK auth
+    tidal/                     # TIDAL API client (official SDK)
+      client.ts                # SDK init, singleton management
+      types.ts                 # API types and constants
+      fetcher.ts               # Batch track fetcher
+      mappers.ts               # JSON:API → Track mapping
+      search.ts                # Search endpoints
+      artists.ts               # Artist endpoints
+      albums.ts                # Album endpoints
+      playlists.ts             # Playlist + favorites endpoints
+      tracks.ts                # Track + similar + radio endpoints
+      index.ts                 # Barrel exports
+  lib/
+    config.ts                  # Configuration (ports, paths, timeouts)
+    paths.ts                   # Path utilities
+    logger.ts                  # stderr logger
+    retry.ts                   # HTTP retry with backoff
 ```
 
 ## Design Decisions
 
-### Why CDP over other approaches?
+### Why CDP for playback?
 
 | Approach | Pros | Cons |
 |----------|------|------|
@@ -129,12 +79,16 @@ User              tidal-cli         nowplaying-cli      macOS NowPlaying
 | Direct TIDALPlayer binary | Lower level | Need to handle auth/DRM ourselves |
 | AppleScript/Accessibility | No special launch flags | Limited control, permission issues |
 | Media key simulation | Simple | Can't navigate/play specific content |
-| Tidal API (OAuth) | Official | Playback control ≠ API (DRM streams) |
+| TIDAL API (OAuth) | Official | Can't control playback (DRM streams) |
+
+### Why the official SDK for catalog access?
+
+The `@tidal-music/api` SDK provides typed access to the TIDAL catalog (search, playlists, favorites). It handles OAuth PKCE, token refresh, and JSON:API response parsing.
 
 ### Why nowplaying-cli for status?
 
-The macOS Now Playing framework provides accurate, real-time playback info without any CDP overhead. It's the same data that shows in Control Center. Separating "read" (nowplaying-cli) from "write" (CDP) keeps things simple and fast.
+The macOS Now Playing framework provides accurate, real-time playback info without CDP overhead. Separating "read" (nowplaying-cli) from "write" (CDP) keeps things simple and fast.
 
 ### Why auto-launch?
 
-Users shouldn't need to remember special flags. The CLI handles ensuring TIDAL is running correctly, relaunching with CDP if needed. This makes it agent-friendly (Ori can just run commands without manual setup).
+Users shouldn't need to remember special flags. The CLI ensures TIDAL is running with CDP enabled, relaunching if needed.

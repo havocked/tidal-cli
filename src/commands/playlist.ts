@@ -39,7 +39,7 @@ async function runPlaylistCreate(options: PlaylistCreateOptions): Promise<void> 
 
   if (trackIds.length === 0) {
     throw new Error(
-      "No track IDs provided. Pipe IDs via stdin:\n  curator discover --genre \"jazz\" --format ids | curator playlist create --name \"Jazz Mix\""
+      "No track IDs provided. Pipe IDs via stdin:\n  tidal-cli playlist create --name \"Jazz Mix\" < track-ids.txt"
     );
   }
 
