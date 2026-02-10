@@ -1,6 +1,6 @@
 {
   "name": "tidal-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI to control the TIDAL desktop app via Chrome DevTools Protocol",
   "main": "dist/cli.js",
   "bin": {
@@ -21,7 +21,11 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@tidal-music/api": "^0.7.0",
+    "@tidal-music/auth": "^1.4.0",
+    "@tidal-music/common": "^0.2.0",
     "commander": "^14.0.3",
+    "open": "^11.0.0",
     "ws": "^8.18.1"
   }
 }
