@@ -14,13 +14,16 @@ import { registerRadioCommand } from "./commands/radio";
 import { registerRecommendationsCommand } from "./commands/recommendations";
 import { registerLibraryCommand } from "./commands/library";
 import { registerLyricsCommand } from "./commands/lyrics";
+import { registerArtistCommand } from "./commands/artist";
+import { registerAlbumCommand } from "./commands/album";
+import { registerSuggestCommand } from "./commands/suggest";
 
 const program = new Command();
 
 program
   .name("tidal-cli")
   .description("Control the TIDAL desktop app from the command line")
-  .version("0.2.0");
+  .version("0.3.0");
 
 // CDP playback commands
 registerPlayCommand(program);
@@ -38,6 +41,9 @@ registerRadioCommand(program);
 registerRecommendationsCommand(program);
 registerLibraryCommand(program);
 registerLyricsCommand(program);
+registerArtistCommand(program);
+registerAlbumCommand(program);
+registerSuggestCommand(program);
 
 program.parseAsync(process.argv).catch((error) => {
   const message = error instanceof Error ? error.message : String(error);

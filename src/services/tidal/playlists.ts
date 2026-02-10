@@ -186,6 +186,35 @@ export async function addTracksToPlaylist(
 }
 
 /**
+ * Update a playlist's name and/or description.
+ */
+export async function updatePlaylist(
+  playlistId: string,
+  attrs: { name?: string; description?: string }
+): Promise<void> {
+  const client = getClient();
+
+  const resp = await (client as { PATCH: Function }).PATCH("/playlists/{id}", {
+    params: {
+      path: { id: playlistId },
+    },
+    body: {
+      data: {
+        id: playlistId,
+        type: "playlists",
+        attributes: attrs,
+      },
+    },
+  }) as { error?: unknown };
+
+  if (resp.error) {
+    throw new Error(
+      `Failed to update playlist: ${JSON.stringify(resp.error)}`
+    );
+  }
+}
+
+/**
  * Delete a playlist.
  */
 export async function deletePlaylist(playlistId: string): Promise<void> {

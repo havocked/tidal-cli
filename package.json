@@ -1,6 +1,6 @@
 {
   "name": "tidal-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CLI for TIDAL — desktop app control via CDP and catalog access via the official API",
   "main": "dist/cli.js",
   "bin": {

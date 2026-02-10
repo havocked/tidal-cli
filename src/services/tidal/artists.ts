@@ -268,6 +268,54 @@ export async function getArtistRadio(
 /**
  * Get artist biography text.
  */
+/**
+ * Get artist details: name, popularity, externalLinks.
+ */
+export async function getArtistDetails(
+  artistId: string
+): Promise<{
+  id: string;
+  name: string;
+  popularity: number | null;
+  externalLinks: Array<{ href: string; meta: { type: string } }>;
+  picture: string | null;
+}> {
+  const client = getClient();
+
+  const { data } = await withRetry(
+    () =>
+      client.GET("/artists", {
+        params: {
+          query: {
+            countryCode: COUNTRY_CODE,
+            "filter[id]": [artistId],
+          },
+        },
+      }),
+    { label: `getArtistDetails(${artistId})` }
+  );
+
+  const artist = (data as { data?: ArtistResource[] })?.data?.[0];
+  if (!artist) {
+    throw new Error(`Artist ${artistId} not found`);
+  }
+
+  const attrs = artist.attributes as {
+    name?: string;
+    popularity?: number;
+    externalLinks?: Array<{ href: string; meta: { type: string } }>;
+    picture?: Array<{ url?: string }>;
+  } | undefined;
+
+  return {
+    id: artist.id,
+    name: attrs?.name ?? "Unknown",
+    popularity: attrs?.popularity ?? null,
+    externalLinks: attrs?.externalLinks ?? [],
+    picture: attrs?.picture?.[0]?.url ?? null,
+  };
+}
+
 export async function getArtistBio(
   artistId: number
 ): Promise<{ text: string; source: string } | null> {

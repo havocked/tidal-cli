@@ -210,6 +210,31 @@ export async function searchPlaylists(
 /**
  * Search TIDAL for top hits matching a query (mixed results).
  */
+/**
+ * Get search autocomplete suggestions.
+ */
+export async function getSearchSuggestions(
+  query: string
+): Promise<string[]> {
+  const client = getClient();
+
+  const { data } = await withRetry(
+    () =>
+      (client as { GET: Function }).GET("/searchSuggestions/{id}", {
+        params: {
+          path: { id: query },
+          query: { countryCode: COUNTRY_CODE },
+        },
+      }) as Promise<{ data?: unknown; error?: unknown }>,
+    { label: `getSearchSuggestions("${query}")` }
+  );
+
+  // The response is a single resource with attributes.suggestions array
+  const resource = (data as { data?: { attributes?: { suggestions?: Array<{ query?: string }> } } })?.data;
+  const suggestions = resource?.attributes?.suggestions ?? [];
+  return suggestions.map((s) => s.query ?? "").filter(Boolean);
+}
+
 export async function searchTopHits(
   query: string,
   limit = 20

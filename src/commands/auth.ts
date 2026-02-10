@@ -3,8 +3,11 @@ import fs from "fs";
 import http from "http";
 import { URL } from "url";
 import * as auth from "@tidal-music/auth";
+import { installNodeStorage } from "../services/nodeStorage";
 import { expandHome } from "../lib/paths";
-import { loadCredentials } from "../services/tidal";
+import { loadCredentials, initTidalClient, getCurrentUser } from "../services/tidal";
+
+installNodeStorage();
 
 const REDIRECT_URI = "http://localhost:8080/callback";
 const CREDENTIALS_STORAGE_KEY = "tidal-cli-auth";
@@ -111,6 +114,20 @@ async function checkStatus(): Promise<void> {
         } else {
           console.log("Token expired (will auto-refresh on next use)");
         }
+      }
+
+      // Fetch user profile
+      try {
+        await initTidalClient();
+        const user = await getCurrentUser();
+        if (user.username) console.log(`Username: ${user.username}`);
+        if (user.email) console.log(`Email: ${user.email}`);
+        if (user.firstName || user.lastName) {
+          console.log(`Name: ${[user.firstName, user.lastName].filter(Boolean).join(" ")}`);
+        }
+        if (user.country) console.log(`Country: ${user.country}`);
+      } catch {
+        // Profile fetch is best-effort
       }
     } else {
       console.log("❌ Not logged in. Run: tidal-cli auth login");

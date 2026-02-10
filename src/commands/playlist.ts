@@ -4,6 +4,7 @@ import {
   createPlaylist,
   deletePlaylist,
   removeTracksFromPlaylist,
+  updatePlaylist,
   initTidalClient,
 } from "../services/tidal";
 
@@ -104,5 +105,24 @@ export function registerPlaylistCommand(program: Command): void {
       const removed = await removeTracksFromPlaylist(playlistId, trackIds);
       console.error(`[playlist] Removed ${removed} tracks from ${playlistId}`);
       console.log(JSON.stringify({ playlistId, removedCount: removed }));
+    });
+
+  playlist
+    .command("update <playlist-id>")
+    .description("Update a playlist's name and/or description")
+    .option("--name <name>", "New playlist name")
+    .option("--description <text>", "New playlist description")
+    .action(async (playlistId: string, options: { name?: string; description?: string }) => {
+      if (!options.name && !options.description) {
+        console.error("Provide at least --name or --description");
+        process.exitCode = 1;
+        return;
+      }
+      await initTidalClient();
+      const attrs: { name?: string; description?: string } = {};
+      if (options.name) attrs.name = options.name;
+      if (options.description) attrs.description = options.description;
+      await updatePlaylist(playlistId, attrs);
+      console.log(JSON.stringify({ updated: playlistId, ...attrs }));
     });
 }

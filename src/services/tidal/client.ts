@@ -98,6 +98,40 @@ export function getClient(): ApiClient {
   return apiClient;
 }
 
+/**
+ * Get current user's profile.
+ */
+export async function getCurrentUser(): Promise<{
+  id: string;
+  username: string | null;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  country: string | null;
+}> {
+  if (!apiClient) throw new Error("Tidal client not initialized.");
+
+  const resp = await (apiClient as { GET: Function }).GET("/users/me", {
+    params: { query: {} },
+  }) as { data?: unknown; error?: unknown };
+
+  if (resp.error) {
+    throw new Error(`Failed to get user profile: ${JSON.stringify(resp.error)}`);
+  }
+
+  const resource = (resp.data as { data?: { id: string; attributes?: Record<string, unknown> } })?.data;
+  const attrs = resource?.attributes ?? {};
+
+  return {
+    id: resource?.id ?? userId ?? "unknown",
+    username: (attrs.username as string) ?? null,
+    email: (attrs.email as string) ?? null,
+    firstName: (attrs.firstName as string) ?? null,
+    lastName: (attrs.lastName as string) ?? null,
+    country: (attrs.country as string) ?? null,
+  };
+}
+
 export function getUserId(): string {
   if (!userId) {
     throw new Error("No user session. Call initTidalClient() first.");
