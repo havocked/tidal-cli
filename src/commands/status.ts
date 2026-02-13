@@ -2,6 +2,20 @@ import { Command } from "commander";
 import { getNowPlaying, formatTime } from "../services/nowplaying";
 import { plainKV } from "../lib/formatter";
 
+async function showAuthHint(): Promise<void> {
+  try {
+    const { loadCredentials, initTidalClient, getCurrentUser } = await import("../services/tidal");
+    const { installNodeStorage } = await import("../services/nodeStorage");
+    installNodeStorage();
+    loadCredentials();
+    await initTidalClient();
+    const user = await getCurrentUser();
+    console.log(`  Auth:   ✅ ${user.username || user.email || "logged in"}`);
+  } catch {
+    console.log("  Auth:   ❌ Not logged in (run: tidal-cli login)");
+  }
+}
+
 export function registerStatusCommand(program: Command): void {
   program
     .command("status")
@@ -20,6 +34,7 @@ export function registerStatusCommand(program: Command): void {
 
         if (!np.title || np.title === "") {
           console.log("Nothing playing");
+          await showAuthHint();
           return;
         }
 

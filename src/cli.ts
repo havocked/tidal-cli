@@ -46,6 +46,21 @@ registerArtistCommand(program);
 registerAlbumCommand(program);
 registerSuggestCommand(program);
 
+// Top-level aliases for common subcommands
+program
+  .command("login")
+  .description("Log in with your TIDAL account (alias for auth login)")
+  .action(async () => {
+    await program.parseAsync(["node", "tidal-cli", "auth", "login"]);
+  });
+
+program
+  .command("logout")
+  .description("Clear stored credentials (alias for auth logout)")
+  .action(async () => {
+    await program.parseAsync(["node", "tidal-cli", "auth", "logout"]);
+  });
+
 program.parseAsync(process.argv).catch((error) => {
   const message = error instanceof Error ? error.message : String(error);
   console.error(`Error: ${message}`);
