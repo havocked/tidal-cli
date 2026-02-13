@@ -17,6 +17,7 @@ import { registerLyricsCommand } from "./commands/lyrics";
 import { registerArtistCommand } from "./commands/artist";
 import { registerAlbumCommand } from "./commands/album";
 import { registerSuggestCommand } from "./commands/suggest";
+import { logger } from "./lib/logger";
 
 const program = new Command();
 
@@ -24,7 +25,21 @@ program
   .name("tidal-cli")
   .description("Control the TIDAL desktop app from the command line")
   .version("0.3.0")
-  .option("--plain", "Line-oriented plain output (tab-separated, grep-friendly)");
+  .option("--plain", "Line-oriented plain output (tab-separated, grep-friendly)")
+  .option("--verbose", "Verbose logging (CDP details, API URLs)")
+  .option("--debug", "Debug logging (full payloads, raw messages)")
+  .option("--log-file <path>", "Write logs to file (JSON-lines format)");
+
+// Initialize logger from global flags before any command runs
+program.hook("preAction", () => {
+  const opts = program.opts();
+  if (opts.verbose && opts.debug) {
+    console.error("Error: --verbose and --debug are mutually exclusive");
+    process.exit(1);
+  }
+  logger.init({ verbose: opts.verbose, debug: opts.debug, logFile: opts.logFile });
+  logger.startTimer();
+});
 
 // CDP playback commands
 registerPlayCommand(program);

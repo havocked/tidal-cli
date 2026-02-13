@@ -1,4 +1,5 @@
 import { withRetry } from "../../lib/retry";
+import { logger } from "../../lib/logger";
 import type { Track } from "../types";
 import { getClient } from "./client";
 import { buildIncludedMap, mapTrackResource, resolveTrackMeta } from "./mappers";
@@ -31,6 +32,8 @@ export async function fetchTracksByIds(
     if (i > 0) await delay(RATE_LIMIT_MS);
 
     const chunk = trackIds.slice(i, i + BATCH_SIZE);
+    logger.verbose("API: fetching tracks batch", { batchIndex: i / BATCH_SIZE, count: chunk.length });
+    logger.debug("API: track IDs", { ids: chunk });
     const { data } = await withRetry(
       () =>
         client.GET("/tracks", {

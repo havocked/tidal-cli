@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { logger } from "../lib/logger";
 import {
   addTracksToPlaylist,
   createPlaylist,
@@ -46,6 +47,7 @@ async function runPlaylistCreate(options: PlaylistCreateOptions): Promise<void> 
     );
   }
 
+  logger.info(`playlist create: "${options.name}"`, { trackCount: trackIds.length });
   console.error(`[playlist] Creating playlist: ${options.name}`);
   console.error(`[playlist] ${trackIds.length} tracks to add`);
 
@@ -70,6 +72,7 @@ async function runPlaylistCreate(options: PlaylistCreateOptions): Promise<void> 
     url: `https://listen.tidal.com/playlist/${playlist.id}`,
   };
   console.log(JSON.stringify(output, null, 2));
+  logger.done("playlist create completed", { playlistId: playlist.id, trackCount: added });
 }
 
 export function registerPlaylistCommand(program: Command): void {

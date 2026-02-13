@@ -1,6 +1,7 @@
 import WebSocket from "ws";
 import http from "http";
 import { TidalCliConfig } from "../lib/config";
+import { logger } from "../lib/logger";
 
 export type CDPTarget = {
   id: string;
@@ -16,6 +17,7 @@ export type CDPTarget = {
 export async function getTargets(config: TidalCliConfig): Promise<CDPTarget[]> {
   return new Promise((resolve, reject) => {
     const url = `http://localhost:${config.cdpPort}/json`;
+    logger.verbose("CDP: discovering targets", { url });
     const req = http.get(url, (res) => {
       let data = "";
       res.on("data", (chunk) => (data += chunk));
@@ -70,6 +72,8 @@ export async function evaluate(
   options?: { awaitPromise?: boolean }
 ): Promise<unknown> {
   const target = await findMainTarget(config);
+  logger.verbose("CDP: evaluating expression", { targetUrl: target.url });
+  logger.debug("CDP: expression", { expression });
 
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(target.webSocketDebuggerUrl);
@@ -99,6 +103,7 @@ export async function evaluate(
 
     ws.on("message", (data) => {
       if (settled) return;
+      logger.debug("CDP: raw message", { raw: data.toString().slice(0, 500) });
       try {
         const msg = JSON.parse(data.toString()) as {
           id?: number;

@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { loadConfig } from "../lib/config";
 import { ensureTidalWithCDP } from "../services/launcher";
 import { navigate, clickButton, evaluate } from "../services/cdp";
+import { logger } from "../lib/logger";
 
 /**
  * Parse a Tidal resource identifier. Accepts:
@@ -58,9 +59,11 @@ export function registerPlayCommand(program: Command): void {
     .option("--no-shuffle", "Do not enable shuffle (default for albums/playlists)")
     .action(async (resource: string) => {
       const config = loadConfig();
-      await ensureTidalWithCDP(config);
-
       const parsed = parseTidalResource(resource);
+      logger.info(`play: ${parsed.type}/${parsed.id}`);
+      logger.verbose("Parsed resource", { type: parsed.type, id: parsed.id, url: parsed.desktopUrl });
+
+      await ensureTidalWithCDP(config);
       console.log(`▶ Playing ${parsed.type}/${parsed.id}`);
 
       // Navigate to the resource page
@@ -105,5 +108,6 @@ export function registerPlayCommand(program: Command): void {
       } catch {
         console.log("✓ Play command sent");
       }
+      logger.done("play command completed", { type: parsed.type, id: parsed.id });
     });
 }

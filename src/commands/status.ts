@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { getNowPlaying, formatTime } from "../services/nowplaying";
 import { plainKV } from "../lib/formatter";
+import { logger } from "../lib/logger";
 
 async function showAuthHint(): Promise<void> {
   try {
@@ -24,6 +25,7 @@ export function registerStatusCommand(program: Command): void {
     .option("--json", "Output as JSON")
     .action(async (opts: { json?: boolean }) => {
       try {
+        logger.info("status: checking now playing");
         const plain = program.opts().plain;
         const np = getNowPlaying();
 
@@ -59,8 +61,10 @@ export function registerStatusCommand(program: Command): void {
             `  Time:   ${formatTime(np.elapsed)} / ${formatTime(np.duration)}`
           );
         }
+        logger.done("status completed", { title: np.title, isPlaying: np.isPlaying });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
+        logger.error("status failed", { error: msg });
         console.error(msg);
         process.exitCode = 1;
       }
