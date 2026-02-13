@@ -74,9 +74,20 @@ tidal-cli repeat     # Toggle repeat
 ### `status` — Now playing
 
 ```bash
-tidal-cli status          # Human-readable
-tidal-cli status --json   # Machine-readable
+tidal-cli status            # Human-readable (emoji, formatted)
+tidal-cli status --json     # Structured JSON
+tidal-cli --plain status    # Tab-separated, grep-friendly
 ```
+
+**Output modes:**
+
+| Flag | Format | Use case |
+|---|---|---|
+| *(none)* | Human-friendly with emoji | Interactive use |
+| `--json` | Structured JSON | Programmatic parsing, jq |
+| `--plain` | Tab-separated lines | grep, awk, cut, shell pipes |
+
+`--plain` is a global flag (before the command). ID is always the first field.
 
 Uses macOS Now Playing info via `nowplaying-cli`.
 

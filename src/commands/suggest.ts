@@ -11,6 +11,11 @@ export function registerSuggestCommand(program: Command): void {
     .action(async (query: string) => {
       await initTidalClient();
       const suggestions = await getSearchSuggestions(query);
-      console.log(JSON.stringify({ suggestions }, null, 2));
+      const plain = program.opts().plain;
+      if (plain) {
+        for (const s of suggestions) console.log(s);
+      } else {
+        console.log(JSON.stringify({ suggestions }, null, 2));
+      }
     });
 }

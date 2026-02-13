@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { installNodeStorage } from "../services/nodeStorage";
 import { initTidalClient, getAlbumDetails, getSimilarAlbums } from "../services/tidal";
+import { plainKV } from "../lib/formatter";
 
 installNodeStorage();
 
@@ -15,7 +16,8 @@ export function registerAlbumCommand(program: Command): void {
     .action(async (albumId: string) => {
       await initTidalClient();
       const details = await getAlbumDetails(albumId);
-      console.log(JSON.stringify(details, null, 2));
+      const plain = program.opts().plain;
+      console.log(plain ? plainKV(details as Record<string, unknown>) : JSON.stringify(details, null, 2));
     });
 
   album
@@ -25,6 +27,11 @@ export function registerAlbumCommand(program: Command): void {
     .action(async (albumId: string, options: { limit?: number }) => {
       await initTidalClient();
       const similar = await getSimilarAlbums(albumId, options.limit ?? 10);
-      console.log(JSON.stringify({ count: similar.length, albums: similar }, null, 2));
+      const plain = program.opts().plain;
+      if (plain) {
+        for (const a of similar) console.log(`${a.id}\t${a.type}`);
+      } else {
+        console.log(JSON.stringify({ count: similar.length, albums: similar }, null, 2));
+      }
     });
 }

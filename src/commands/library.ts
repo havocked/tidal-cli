@@ -7,6 +7,7 @@ import {
   getFavoriteArtists,
   getUserPlaylists,
 } from "../services/tidal";
+import { plainTracks, plainArtists, plainAlbums, plainPlaylists } from "../lib/formatter";
 
 installNodeStorage();
 
@@ -29,9 +30,12 @@ export function registerLibraryCommand(program: Command): void {
       await initTidalClient();
       const limit = options.limit ?? 100;
       const tracks = await getFavoriteTracks(limit);
+      const plain = program.opts().plain;
 
       if (options.format === "ids") {
         for (const t of tracks) console.log(t.id);
+      } else if (plain) {
+        console.log(plainTracks(tracks));
       } else {
         console.log(JSON.stringify({ count: tracks.length, tracks }, null, 2));
       }
@@ -45,7 +49,8 @@ export function registerLibraryCommand(program: Command): void {
       await initTidalClient();
       const limit = options.limit ?? 50;
       const albums = await getFavoriteAlbums(limit);
-      console.log(JSON.stringify({ count: albums.length, albums }, null, 2));
+      const plain = program.opts().plain;
+      console.log(plain ? plainAlbums(albums) : JSON.stringify({ count: albums.length, albums }, null, 2));
     });
 
   library
@@ -56,7 +61,8 @@ export function registerLibraryCommand(program: Command): void {
       await initTidalClient();
       const limit = options.limit ?? 50;
       const artists = await getFavoriteArtists(limit);
-      console.log(JSON.stringify({ count: artists.length, artists }, null, 2));
+      const plain = program.opts().plain;
+      console.log(plain ? plainArtists(artists) : JSON.stringify({ count: artists.length, artists }, null, 2));
     });
 
   library
@@ -67,6 +73,7 @@ export function registerLibraryCommand(program: Command): void {
       await initTidalClient();
       const limit = options.limit ?? 50;
       const playlists = await getUserPlaylists(limit);
-      console.log(JSON.stringify({ count: playlists.length, playlists }, null, 2));
+      const plain = program.opts().plain;
+      console.log(plain ? plainPlaylists(playlists) : JSON.stringify({ count: playlists.length, playlists }, null, 2));
     });
 }

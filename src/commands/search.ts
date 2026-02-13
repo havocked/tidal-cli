@@ -8,6 +8,7 @@ import {
   searchPlaylists,
   searchTopHits,
 } from "../services/tidal";
+import { plainTracks, plainArtists, plainAlbums, plainPlaylists } from "../lib/formatter";
 
 installNodeStorage();
 
@@ -26,6 +27,7 @@ export function registerSearchCommand(program: Command): void {
       await initTidalClient();
       const limit = options.limit ?? 20;
       const type = (options.type ?? "track").toLowerCase();
+      const plain = program.opts().plain;
 
       switch (type) {
         case "artist":
@@ -36,31 +38,30 @@ export function registerSearchCommand(program: Command): void {
             process.exitCode = 1;
             return;
           }
-          console.log(JSON.stringify(artist, null, 2));
+          console.log(plain ? `${artist.id}\t${artist.name}` : JSON.stringify(artist, null, 2));
           break;
         }
         case "album":
         case "albums": {
           const albums = await searchAlbums(query, limit);
-          console.log(JSON.stringify({ count: albums.length, albums }, null, 2));
+          console.log(plain ? plainAlbums(albums) : JSON.stringify({ count: albums.length, albums }, null, 2));
           break;
         }
         case "playlist":
         case "playlists": {
           const playlists = await searchPlaylists(query, limit);
-          console.log(JSON.stringify({ count: playlists.length, playlists }, null, 2));
+          console.log(plain ? plainPlaylists(playlists) : JSON.stringify({ count: playlists.length, playlists }, null, 2));
           break;
         }
         case "top":
         case "tophits": {
           const tracks = await searchTopHits(query, limit);
-          console.log(JSON.stringify({ count: tracks.length, tracks }, null, 2));
+          console.log(plain ? plainTracks(tracks) : JSON.stringify({ count: tracks.length, tracks }, null, 2));
           break;
         }
         default: {
-          // "track" / "tracks" / anything else defaults to tracks
           const tracks = await searchTracks(query, limit);
-          console.log(JSON.stringify({ count: tracks.length, tracks }, null, 2));
+          console.log(plain ? plainTracks(tracks) : JSON.stringify({ count: tracks.length, tracks }, null, 2));
           break;
         }
       }

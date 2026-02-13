@@ -26,6 +26,7 @@ export function registerLyricsCommand(program: Command): void {
       if (options.json) {
         console.log(JSON.stringify(result, null, 2));
       } else {
+        // --plain and default both just show lyrics text
         console.log(result.lyrics);
       }
     });

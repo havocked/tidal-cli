@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { installNodeStorage } from "../services/nodeStorage";
 import { initTidalClient, getTrackRadio, getArtistRadio } from "../services/tidal";
+import { plainTracks } from "../lib/formatter";
 
 installNodeStorage();
 
@@ -23,6 +24,7 @@ export function registerRadioCommand(program: Command): void {
         ? await getArtistRadio(parseInt(id, 10), limit)
         : await getTrackRadio(id, limit);
 
-      console.log(JSON.stringify({ count: tracks.length, tracks }, null, 2));
+      const plain = program.opts().plain;
+      console.log(plain ? plainTracks(tracks) : JSON.stringify({ count: tracks.length, tracks }, null, 2));
     });
 }

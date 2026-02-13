@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { installNodeStorage } from "../services/nodeStorage";
 import { initTidalClient, getArtistDetails } from "../services/tidal";
+import { plainKV } from "../lib/formatter";
 
 installNodeStorage();
 
@@ -15,6 +16,7 @@ export function registerArtistCommand(program: Command): void {
     .action(async (artistId: string) => {
       await initTidalClient();
       const details = await getArtistDetails(artistId);
-      console.log(JSON.stringify(details, null, 2));
+      const plain = program.opts().plain;
+      console.log(plain ? plainKV(details as Record<string, unknown>) : JSON.stringify(details, null, 2));
     });
 }

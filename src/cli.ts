@@ -23,7 +23,8 @@ const program = new Command();
 program
   .name("tidal-cli")
   .description("Control the TIDAL desktop app from the command line")
-  .version("0.3.0");
+  .version("0.3.0")
+  .option("--plain", "Line-oriented plain output (tab-separated, grep-friendly)");
 
 // CDP playback commands
 registerPlayCommand(program);

@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { getNowPlaying, formatTime } from "../services/nowplaying";
+import { plainKV } from "../lib/formatter";
 
 export function registerStatusCommand(program: Command): void {
   program
@@ -9,6 +10,7 @@ export function registerStatusCommand(program: Command): void {
     .option("--json", "Output as JSON")
     .action(async (opts: { json?: boolean }) => {
       try {
+        const plain = program.opts().plain;
         const np = getNowPlaying();
 
         if (opts.json) {
@@ -18,6 +20,18 @@ export function registerStatusCommand(program: Command): void {
 
         if (!np.title || np.title === "") {
           console.log("Nothing playing");
+          return;
+        }
+
+        if (plain) {
+          console.log(plainKV({
+            state: np.isPlaying ? "playing" : "paused",
+            title: np.title,
+            artist: np.artist,
+            album: np.album,
+            elapsed: np.elapsed,
+            duration: np.duration,
+          }));
           return;
         }
 
