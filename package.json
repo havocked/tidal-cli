@@ -19,7 +19,16 @@
     "url": "https://github.com/havocked/tidal-cli/issues"
   },
   "homepage": "https://github.com/havocked/tidal-cli#readme",
-  "keywords": ["tidal", "music", "cli", "cdp", "devtools", "playlist", "search", "api"],
+  "keywords": [
+    "tidal",
+    "music",
+    "cli",
+    "cdp",
+    "devtools",
+    "playlist",
+    "search",
+    "api"
+  ],
   "author": "havocked",
   "license": "ISC",
   "files": [

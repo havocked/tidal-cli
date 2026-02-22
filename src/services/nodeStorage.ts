@@ -1,6 +1,6 @@
 import fs from "fs";
+import os from "os";
 import path from "path";
-import { expandHome } from "../lib/paths";
 
 /**
  * A minimal localStorage-compatible adapter for Node.js.
@@ -11,8 +11,11 @@ class NodeStorage implements Storage {
   private cache: Record<string, string> = {};
 
   constructor() {
-    this.storePath = expandHome(
-      path.join(process.env.HOME || "", ".config", "tidal-cli", "auth-storage.json")
+    this.storePath = path.join(
+      os.homedir(),
+      ".config",
+      "tidal-cli",
+      "auth-storage.json"
     );
     this.load();
   }

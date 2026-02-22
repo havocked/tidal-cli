@@ -1,6 +1,3 @@
-import os from "os";
-import path from "path";
-
 export type TidalCliConfig = {
   /** CDP WebSocket port for TIDAL desktop app */
   cdpPort: number;
@@ -19,10 +16,16 @@ const DEFAULT_CONFIG: TidalCliConfig = {
   navigationWaitMs: 2000,
 };
 
+const MIN_PORT = 1;
+const MAX_PORT = 65535;
+
 export function loadConfig(): TidalCliConfig {
-  const cdpPort = process.env.TIDAL_CDP_PORT
-    ? parseInt(process.env.TIDAL_CDP_PORT, 10)
-    : DEFAULT_CONFIG.cdpPort;
+  const rawPort = process.env.TIDAL_CDP_PORT;
+  const parsedPort = rawPort ? Number.parseInt(rawPort, 10) : NaN;
+  const cdpPort =
+    Number.isFinite(parsedPort) && parsedPort >= MIN_PORT && parsedPort <= MAX_PORT
+      ? parsedPort
+      : DEFAULT_CONFIG.cdpPort;
 
   const appPath = process.env.TIDAL_APP_PATH ?? DEFAULT_CONFIG.appPath;
 

@@ -38,15 +38,37 @@ async function loginWithBrowser(): Promise<void> {
   await open(loginUrl);
 
   return new Promise((resolve, reject) => {
-    const server = http.createServer(async (req, res) => {
+    let settled = false;
+    let timeout: NodeJS.Timeout | undefined;
+    let server: http.Server | undefined;
+
+    const finish = (error?: unknown): void => {
+      if (settled) return;
+      settled = true;
+      if (timeout) clearTimeout(timeout);
+      if (server) {
+        try {
+          server.close();
+        } catch {
+          // ignore close races
+        }
+      }
+
+      if (error) {
+        reject(error instanceof Error ? error : new Error(String(error)));
+      } else {
+        resolve();
+      }
+    };
+
+    server = http.createServer(async (req, res) => {
       const url = new URL(req.url || "", REDIRECT_URI);
       const error = url.searchParams.get("error");
 
       if (error) {
         res.writeHead(400, { "Content-Type": "text/html" });
         res.end(`<h2>Error: ${error}</h2><p>You can close this window.</p>`);
-        server.close();
-        reject(new Error(error));
+        finish(new Error(error));
         return;
       }
 
@@ -61,13 +83,11 @@ async function loginWithBrowser(): Promise<void> {
           res.end(
             "<h2>✅ Authorization successful!</h2><p>You can close this window.</p>"
           );
-          server.close();
-          resolve();
+          finish();
         } catch (err) {
           res.writeHead(500, { "Content-Type": "text/html" });
           res.end(`<h2>Token exchange failed</h2><p>${err}</p>`);
-          server.close();
-          reject(err);
+          finish(err);
         }
       } else {
         res.writeHead(400, { "Content-Type": "text/html" });
@@ -75,14 +95,17 @@ async function loginWithBrowser(): Promise<void> {
       }
     });
 
+    server.on("error", (err) => {
+      finish(new Error(`Failed to start OAuth callback server on port 8080: ${err.message}`));
+    });
+
     server.listen(8080, () => {
       console.log("Waiting for authorization...");
     });
 
     // Timeout after 2 minutes
-    const timeout = setTimeout(() => {
-      server.close();
-      reject(new Error("Login timed out after 2 minutes"));
+    timeout = setTimeout(() => {
+      finish(new Error("Login timed out after 2 minutes"));
     }, 120_000);
     timeout.unref();
   });
@@ -105,7 +128,7 @@ async function checkStatus(): Promise<void> {
 
       console.log("✅ Logged in");
       console.log(`User ID: ${String(userId)}`);
-      console.log(`Token: ${credentials.token.slice(0, 30)}...`);
+      console.log("Token: present");
 
       if ("expires" in credentials && typeof credentials.expires === "number") {
         const expiresIn = Math.round((credentials.expires - Date.now()) / 1000);

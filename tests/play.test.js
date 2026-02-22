@@ -1,43 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-
-// parseTidalResource is not exported, so we test it indirectly by extracting the logic
-// For testability, let's re-implement the parser here and verify it matches expected behavior
-
-function parseTidalResource(input) {
-  // Full tidal URL
-  const urlMatch = input.match(
-    /(?:https?:\/\/)?(?:listen\.|www\.)?tidal\.com\/(?:browse\/)?(track|album|playlist|mix|artist)\/([^\s?#]+)/i
-  );
-  if (urlMatch) {
-    return {
-      type: urlMatch[1],
-      id: urlMatch[2],
-      desktopUrl: `https://desktop.tidal.com/${urlMatch[1]}/${urlMatch[2]}`,
-    };
-  }
-
-  // Short form: type/id
-  const shortMatch = input.match(
-    /^(track|album|playlist|mix|artist)\/([^\s]+)$/i
-  );
-  if (shortMatch) {
-    return {
-      type: shortMatch[1],
-      id: shortMatch[2],
-      desktopUrl: `https://desktop.tidal.com/${shortMatch[1]}/${shortMatch[2]}`,
-    };
-  }
-
-  // Bare ID
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(input);
-  const type = isUuid ? "playlist" : "track";
-  return {
-    type,
-    id: input,
-    desktopUrl: `https://desktop.tidal.com/${type}/${input}`,
-  };
-}
+const { Command } = require("commander");
+const { parseTidalResource } = require("../dist/commands/play");
 
 test("parseTidalResource handles full browse URL", () => {
   const result = parseTidalResource("https://tidal.com/browse/track/251380837");
@@ -103,4 +67,16 @@ test("parseTidalResource strips query params from URL", () => {
     "https://tidal.com/browse/track/251380837?u=123"
   );
   assert.equal(result.id, "251380837");
+});
+
+test("play command supports --no-shuffle option", () => {
+  const { registerPlayCommand } = require("../dist/commands/play");
+  const program = new Command();
+  registerPlayCommand(program);
+
+  const play = program.commands.find((c) => c.name() === "play");
+  assert.ok(play, "play command should be registered");
+
+  const noShuffle = play.options.find((o) => o.long === "--no-shuffle");
+  assert.ok(noShuffle, "play command should expose --no-shuffle");
 });

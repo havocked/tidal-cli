@@ -8,6 +8,31 @@ type RetryOptions = {
   label?: string;
 };
 
+function formatApiError(error: unknown): string {
+  if (!error) return "Unknown API error";
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "errors" in error &&
+    Array.isArray((error as { errors?: unknown[] }).errors)
+  ) {
+    const first = (error as { errors?: Array<{ detail?: unknown; title?: unknown }> }).errors?.[0];
+    if (first) {
+      if (typeof first.detail === "string" && first.detail.length > 0) return first.detail;
+      if (typeof first.title === "string" && first.title.length > 0) return first.title;
+    }
+  }
+
+  if (error instanceof Error) return error.message;
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
 /**
  * Wraps an async function with retry logic for HTTP 429 rate limits.
  * Reads Retry-After header to determine wait time.
@@ -24,17 +49,26 @@ export async function withRetry<T>(
     const result = await fn();
     const status = result.response?.status;
 
-    if (status !== 429) return result;
-
-    if (attempt === maxRetries) {
-      log(`[retry] ${label} — 429 after ${maxRetries} retries, giving up`);
+    if (status !== 429) {
+      if (result.error) {
+        const statusSuffix = typeof status === "number" ? ` (${status})` : "";
+        throw new Error(`${label} failed${statusSuffix}: ${formatApiError(result.error)}`);
+      }
       return result;
     }
 
+    if (attempt === maxRetries) {
+      log(`[retry] ${label} — 429 after ${maxRetries} retries, giving up`);
+      const detail = result.error ? formatApiError(result.error) : "Too Many Requests";
+      throw new Error(`${label} failed (429): ${detail}`);
+    }
+
     const retryAfter = result.response?.headers?.get("retry-after");
-    const delayMs = retryAfter
-      ? parseInt(retryAfter, 10) * 1000
-      : DEFAULT_RETRY_DELAY_MS;
+    const retryAfterSeconds = retryAfter ? Number.parseInt(retryAfter, 10) : NaN;
+    const delayMs =
+      Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0
+        ? retryAfterSeconds * 1000
+        : DEFAULT_RETRY_DELAY_MS;
 
     log(
       `[retry] ${label} — 429, waiting ${delayMs / 1000}s (attempt ${attempt + 1}/${maxRetries})`

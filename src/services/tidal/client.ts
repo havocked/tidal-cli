@@ -2,8 +2,8 @@ import { createAPIClient } from "@tidal-music/api";
 import * as auth from "@tidal-music/auth";
 import { trueTime } from "@tidal-music/true-time";
 import fs from "fs";
+import os from "os";
 import path from "path";
-import { expandHome } from "../../lib/paths";
 import type { ApiClient, Credentials } from "./types";
 
 // Suppress noisy "TrueTime is not yet synchronized" from SDK internals
@@ -24,8 +24,11 @@ const CREDENTIALS_STORAGE_KEY = "tidal-cli-auth";
 // --- Public API ---
 
 export function loadCredentials(): Credentials {
-  const configPath = expandHome(
-    path.join(process.env.HOME ?? "", ".config", "tidal-cli", "credentials.json")
+  const configPath = path.join(
+    os.homedir(),
+    ".config",
+    "tidal-cli",
+    "credentials.json"
   );
   if (!fs.existsSync(configPath)) {
     throw new Error(`Missing credentials file: ${configPath}`);

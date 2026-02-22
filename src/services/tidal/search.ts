@@ -16,7 +16,7 @@ import {
 export async function searchArtists(query: string): Promise<Artist | null> {
   const client = getClient();
 
-  const artist = await withEmptyRetry(
+  const artistId = await withEmptyRetry(
     async () => {
       const { data } = await withRetry(
         () =>
@@ -29,16 +29,41 @@ export async function searchArtists(query: string): Promise<Artist | null> {
         { label: `searchArtists("${query}")` }
       );
 
-      const id = data?.data?.[0]?.id;
-      if (!id) return null;
-
-      return { id: parseInt(id, 10), name: query, picture: null } as Artist;
+      return data?.data?.[0]?.id ?? null;
     },
     () => false, // null result is the empty signal, not a field check
     { label: `searchArtists("${query}")`, maxRetries: 2 }
   );
 
-  return artist ?? null;
+  if (!artistId) return null;
+
+  const { data } = await withRetry(
+    () =>
+      client.GET("/artists", {
+        params: {
+          query: {
+            countryCode: COUNTRY_CODE,
+            "filter[id]": [artistId],
+          },
+        },
+      }),
+    { label: `fetchArtist(${artistId})` }
+  );
+
+  const artist = (data as { data?: ArtistResource[] })?.data?.[0];
+  if (!artist) return null;
+
+  const attrs = artist.attributes as
+    | { name?: string; picture?: Array<{ url?: string }> }
+    | undefined;
+  const id = Number.parseInt(artist.id, 10);
+  if (Number.isNaN(id)) return null;
+
+  return {
+    id,
+    name: attrs?.name ?? query,
+    picture: attrs?.picture?.[0]?.url ?? null,
+  };
 }
 
 export async function searchTracks(

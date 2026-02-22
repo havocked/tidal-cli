@@ -51,7 +51,7 @@ export async function getFavoriteTracks(limit = 500): Promise<Track[]> {
       queryParams["page[cursor]"] = cursor;
     }
 
-    const { data, error } = await withRetry(
+    const { data } = await withRetry(
       () =>
         client.GET("/userCollections/{id}/relationships/tracks", {
           params: {
@@ -66,15 +66,6 @@ export async function getFavoriteTracks(limit = 500): Promise<Track[]> {
         }),
       { label: "getFavoriteTracks" }
     );
-
-    if (error) {
-      const errObj = error as Record<string, unknown>;
-      const detail =
-        "errors" in errObj
-          ? (errObj.errors as Array<{ detail?: string }>)[0]?.detail
-          : String(error);
-      throw new Error(`Failed to fetch favorites: ${detail}`);
-    }
 
     const ids = data?.data?.map((r: { id: string }) => r.id) ?? [];
     if (ids.length === 0) break;

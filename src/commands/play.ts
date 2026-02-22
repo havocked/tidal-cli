@@ -12,7 +12,7 @@ import { logger } from "../lib/logger";
  * - Short: playlist/699e5b55-...
  * - Just an ID (assumes track): 251380837
  */
-function parseTidalResource(input: string): {
+export function parseTidalResource(input: string): {
   type: string;
   id: string;
   desktopUrl: string;
@@ -51,13 +51,46 @@ function parseTidalResource(input: string): {
   };
 }
 
+async function ensureShuffleEnabled(
+  config: ReturnType<typeof loadConfig>
+): Promise<"enabled" | "already_on" | "missing"> {
+  const result = await evaluate(
+    config,
+    `(() => {
+      const btns = [...document.querySelectorAll('button[aria-label]')];
+      const btn = btns.find((b) => b.getAttribute('aria-label') === 'Shuffle');
+      if (!btn) return 'missing';
+
+      const ariaPressed = btn.getAttribute('aria-pressed');
+      const ariaChecked = btn.getAttribute('aria-checked');
+      const dataState = btn.getAttribute('data-state');
+      const className = typeof btn.className === 'string' ? btn.className.toLowerCase() : '';
+      const isActive =
+        ariaPressed === 'true' ||
+        ariaChecked === 'true' ||
+        dataState === 'on' ||
+        className.includes('active') ||
+        className.includes('selected');
+
+      if (isActive) return 'already_on';
+      btn.click();
+      return 'enabled';
+    })()`
+  );
+
+  if (result === "enabled" || result === "already_on" || result === "missing") {
+    return result;
+  }
+  return "missing";
+}
+
 export function registerPlayCommand(program: Command): void {
   program
     .command("play")
     .description("Play a track, album, playlist, or mix")
     .argument("<resource>", "Tidal URL, type/id, or bare track ID")
     .option("--no-shuffle", "Do not enable shuffle (default for albums/playlists)")
-    .action(async (resource: string) => {
+    .action(async (resource: string, options: { shuffle?: boolean }) => {
       const config = loadConfig();
       const parsed = parseTidalResource(resource);
       logger.info(`play: ${parsed.type}/${parsed.id}`);
@@ -88,6 +121,23 @@ export function registerPlayCommand(program: Command): void {
           console.error("⚠ Could not find play button. Page may still be loading.");
           process.exitCode = 1;
           return;
+        }
+      }
+
+      const shouldEnableShuffle =
+        options.shuffle !== false &&
+        (parsed.type === "album" || parsed.type === "playlist");
+      if (shouldEnableShuffle) {
+        try {
+          const shuffleStatus = await ensureShuffleEnabled(config);
+          if (shuffleStatus === "enabled") {
+            console.log("🔀 Shuffle enabled");
+          } else if (shuffleStatus === "missing") {
+            logger.warn("Could not find shuffle button to enable shuffle");
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          logger.warn("Failed to enable shuffle", { error: message });
         }
       }
 

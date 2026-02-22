@@ -28,6 +28,19 @@ test("loadConfig respects TIDAL_CDP_PORT env var", () => {
   delete process.env.TIDAL_CDP_PORT;
 });
 
+test("loadConfig falls back to default for invalid TIDAL_CDP_PORT", () => {
+  process.env.TIDAL_CDP_PORT = "not-a-number";
+  assert.equal(loadConfig().cdpPort, 9222);
+
+  process.env.TIDAL_CDP_PORT = "70000";
+  assert.equal(loadConfig().cdpPort, 9222);
+
+  process.env.TIDAL_CDP_PORT = "0";
+  assert.equal(loadConfig().cdpPort, 9222);
+
+  delete process.env.TIDAL_CDP_PORT;
+});
+
 test("loadConfig respects TIDAL_APP_PATH env var", () => {
   process.env.TIDAL_APP_PATH = "/custom/TIDAL.app";
   const config = loadConfig();
