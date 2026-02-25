@@ -7,7 +7,7 @@ test("parseTidalResource handles full browse URL", () => {
   const result = parseTidalResource("https://tidal.com/browse/track/251380837");
   assert.equal(result.type, "track");
   assert.equal(result.id, "251380837");
-  assert.equal(result.desktopUrl, "https://desktop.tidal.com/track/251380837");
+  assert.equal(result.spaPath, "/track/251380837");
 });
 
 test("parseTidalResource handles listen URL", () => {
@@ -16,13 +16,14 @@ test("parseTidalResource handles listen URL", () => {
   );
   assert.equal(result.type, "playlist");
   assert.equal(result.id, "699e5b55-274b-499c-b995-dcefa5e5921b");
+  assert.equal(result.spaPath, "/playlist/699e5b55-274b-499c-b995-dcefa5e5921b");
 });
 
 test("parseTidalResource handles short form", () => {
   const result = parseTidalResource("album/251380836");
   assert.equal(result.type, "album");
   assert.equal(result.id, "251380836");
-  assert.equal(result.desktopUrl, "https://desktop.tidal.com/album/251380836");
+  assert.equal(result.spaPath, "/album/251380836");
 });
 
 test("parseTidalResource handles playlist short form", () => {
@@ -37,7 +38,7 @@ test("parseTidalResource handles bare numeric ID as track", () => {
   const result = parseTidalResource("251380837");
   assert.equal(result.type, "track");
   assert.equal(result.id, "251380837");
-  assert.equal(result.desktopUrl, "https://desktop.tidal.com/track/251380837");
+  assert.equal(result.spaPath, "/track/251380837");
 });
 
 test("parseTidalResource handles bare UUID as playlist", () => {
@@ -67,6 +68,18 @@ test("parseTidalResource strips query params from URL", () => {
     "https://tidal.com/browse/track/251380837?u=123"
   );
   assert.equal(result.id, "251380837");
+});
+
+test("parseTidalResource handles favorites keyword", () => {
+  const result = parseTidalResource("favorites");
+  assert.equal(result.type, "favorites");
+  assert.equal(result.spaPath, "/my-collection/tracks");
+});
+
+test("parseTidalResource handles liked keyword", () => {
+  const result = parseTidalResource("liked");
+  assert.equal(result.type, "favorites");
+  assert.equal(result.spaPath, "/my-collection/tracks");
 });
 
 test("play command supports --no-shuffle option", () => {

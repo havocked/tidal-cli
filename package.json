@@ -1,15 +1,15 @@
 {
   "name": "tidal-cli",
   "version": "0.3.0",
-  "description": "CLI for TIDAL — desktop app control via CDP and catalog access via the official API",
+  "description": "CLI for TIDAL \u2014 desktop app control via CDP and catalog access via the official API",
   "main": "dist/cli.js",
   "bin": {
     "tidal-cli": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
-    "prepare": "npm run build",
-    "test": "npm run build && node --test tests/*.test.js"
+    "prepare": "pnpm run build",
+    "test": "pnpm run build && node --test tests/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -39,16 +39,22 @@
   ],
   "type": "commonjs",
   "devDependencies": {
-    "@types/node": "^25.2.1",
-    "@types/ws": "^8.18.1",
-    "typescript": "^5.9.3"
+    "@types/node": "25.2.2",
+    "@types/ws": "8.18.1",
+    "typescript": "5.9.3"
   },
   "dependencies": {
-    "@tidal-music/api": "^0.7.0",
-    "@tidal-music/auth": "^1.4.0",
-    "@tidal-music/common": "^0.2.0",
-    "commander": "^14.0.3",
-    "open": "^11.0.0",
-    "ws": "^8.18.1"
+    "@tidal-music/api": "0.7.0",
+    "@tidal-music/auth": "1.4.0",
+    "@tidal-music/common": "0.2.0",
+    "@tidal-music/true-time": "0.3.0",
+    "commander": "14.0.3",
+    "open": "11.0.0",
+    "ws": "8.19.0"
+  },
+  "packageManager": "pnpm@10.30.2",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
   }
 }
