@@ -41,7 +41,7 @@
   "devDependencies": {
     "@types/node": "25.2.2",
     "@types/ws": "8.18.1",
-    "typescript": "5.9.3"
+    "typescript": "6.0.2"
   },
   "dependencies": {
     "@tidal-music/api": "0.7.0",
