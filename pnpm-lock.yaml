@@ -12,13 +12,13 @@ importers:
         specifier: 0.7.0
         version: 0.7.0
       '@tidal-music/auth':
-        specifier: 1.4.0
-        version: 1.4.0
+        specifier: 1.5.0
+        version: 1.5.0
       '@tidal-music/common':
         specifier: 0.2.0
         version: 0.2.0
       '@tidal-music/true-time':
-        specifier: ^0.3.0
+        specifier: 0.3.0
         version: 0.3.0
       commander:
         specifier: 14.0.3
@@ -45,8 +45,8 @@ packages:
   '@tidal-music/api@0.7.0':
     resolution: {integrity: sha512-WaogpHAlGhwPR/ScapgvyiXMwCIakUQPdR78LVus4vEcXr1m0oKyeuNu54Y+jMSFM26caIk2kPx75yKpiegSmA==}
 
-  '@tidal-music/auth@1.4.0':
-    resolution: {integrity: sha512-b/8n6aHYoMuzGbNTT4QOwm9xjTosHCn9F+Vi26Nq1x1OuK+XK9zbuAkSwma/C5eYHy4fPBTcSw82us5K5mUHmA==}
+  '@tidal-music/auth@1.5.0':
+    resolution: {integrity: sha512-xq196ktIrq8x4Q4MnHiSJRz3zbdkxGJdFlx6yOs4a57q7OnH0KSI1bBHWuMnOIDhrERKS3pdS5FV4gHjp4HpxA==}
 
   '@tidal-music/common@0.2.0':
     resolution: {integrity: sha512-XBNzRiN6rRQL0gu5cIigMdSQy1U4zEx5nJ9caaIACNXSu+RGGkYpoxWp8CBJTHtkQ3oSF2SMugNEo71i8LPP3g==}
@@ -146,7 +146,7 @@ snapshots:
     dependencies:
       openapi-fetch: 0.15.0
 
-  '@tidal-music/auth@1.4.0':
+  '@tidal-music/auth@1.5.0':
     dependencies:
       '@tidal-music/common': 0.2.0
       '@tidal-music/true-time': 0.3.0
